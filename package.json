@@ -1,5 +1,5 @@
 {
-    "name": "nestjs-tenancy",
+    "name": "king-tenancy",
     "version": "3.0.1",
     "description": "Nestjs module for multitenancy support",
     "author": "Sandeep K <sandeepsuvit@gmail.com>",

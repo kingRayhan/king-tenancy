@@ -6,17 +6,17 @@ import {
   OnApplicationShutdown,
   Provider,
   Scope,
-} from '@nestjs/common';
-import { Type } from '@nestjs/common/interfaces';
-import { HttpAdapterHost, ModuleRef, REQUEST } from '@nestjs/core';
-import { Request } from 'express';
-import { Connection, createConnection, Model } from 'mongoose';
-import { ConnectionOptions } from 'tls';
+} from "@nestjs/common";
+import { Type } from "@nestjs/common/interfaces";
+import { HttpAdapterHost, ModuleRef, REQUEST } from "@nestjs/core";
+import { Request } from "express";
+import { Connection, createConnection, Model } from "mongoose";
+import { ConnectionOptions } from "tls";
 import {
   TenancyModuleAsyncOptions,
   TenancyModuleOptions,
   TenancyOptionsFactory,
-} from './interfaces';
+} from "./interfaces";
 import {
   CONNECTION_MAP,
   DEFAULT_HTTP_ADAPTER_HOST,
@@ -24,8 +24,8 @@ import {
   TENANT_CONNECTION,
   TENANT_CONTEXT,
   TENANT_MODULE_OPTIONS,
-} from './tenancy.constants';
-import { ConnectionMap, ModelDefinitionMap } from './types';
+} from "./tenancy.constants";
+import { ConnectionMap, ModelDefinitionMap } from "./types";
 
 @Global()
 @Module({})
@@ -66,13 +66,13 @@ export class TenancyCoreModule implements OnApplicationShutdown {
         tenantId: string,
         moduleOptions: TenancyModuleOptions,
         connMap: ConnectionMap,
-        modelDefMap: ModelDefinitionMap,
+        modelDefMap: ModelDefinitionMap
       ): Promise<Connection> => {
         return await this.getConnection(
           tenantId,
           moduleOptions,
           connMap,
-          modelDefMap,
+          modelDefMap
         );
       },
       inject: [
@@ -127,13 +127,13 @@ export class TenancyCoreModule implements OnApplicationShutdown {
         tenantId: string,
         moduleOptions: TenancyModuleOptions,
         connMap: ConnectionMap,
-        modelDefMap: ModelDefinitionMap,
+        modelDefMap: ModelDefinitionMap
       ): Promise<Connection> => {
         return await this.getConnection(
           tenantId,
           moduleOptions,
           connMap,
-          modelDefMap,
+          modelDefMap
         );
       },
       inject: [
@@ -175,7 +175,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
 
     // Remove all stray connections
     await Promise.all(
-      [...connectionMap.values()].map((connection) => connection.close()),
+      [...connectionMap.values()].map((connection) => connection.close())
     );
   }
 
@@ -193,7 +193,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
   private static getTenant(
     req: Request,
     moduleOptions: TenancyModuleOptions,
-    adapterHost: HttpAdapterHost,
+    adapterHost: HttpAdapterHost
   ): string {
     // Check if the adaptor is fastify
     const isFastifyAdaptor = this.adapterIsFastify(adapterHost);
@@ -233,20 +233,26 @@ export class TenancyCoreModule implements OnApplicationShutdown {
   private static getTenantFromRequest(
     isFastifyAdaptor: boolean,
     req: Request,
-    tenantIdentifier: string,
+    tenantIdentifier: string
   ) {
-    let tenantId = '';
+    let tenantId = "";
 
     if (isFastifyAdaptor) {
       // For Fastify
       // Get the tenant id from the header
       tenantId =
-        req.headers[`${tenantIdentifier || ''}`.toLowerCase()]?.toString() ||
-        '';
+        req.headers[`${tenantIdentifier || ""}`.toLowerCase()]?.toString() ||
+        "";
     } else {
       // For Express - Default
       // Get the tenant id from the request
-      tenantId = req.get(`${tenantIdentifier}`) || '';
+      // tenantId = req.get(`${tenantIdentifier}`) || '';
+      // https://github.com/needle-innovision/nestjs-tenancy/issues/10#issuecomment-901985374
+      try {
+        tenantId = req.get(`${tenantIdentifier}`) || "";
+      } catch (err) {
+        tenantId = req.req.get(`${tenantIdentifier}`); // For graphql
+      }
     }
 
     // Validate if tenant id is present
@@ -269,9 +275,9 @@ export class TenancyCoreModule implements OnApplicationShutdown {
    */
   private static getTenantFromSubdomain(
     isFastifyAdaptor: boolean,
-    req: Request,
+    req: Request
   ) {
-    let tenantId = '';
+    let tenantId = "";
 
     if (isFastifyAdaptor) {
       // For Fastify
@@ -312,7 +318,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
     tenantId: string,
     moduleOptions: TenancyModuleOptions,
     connMap: ConnectionMap,
-    modelDefMap: ModelDefinitionMap,
+    modelDefMap: ModelDefinitionMap
   ): Promise<Connection> {
     // Check if validator is set, if so call the `validate` method on it
     if (moduleOptions.validator) {
@@ -331,8 +337,8 @@ export class TenancyCoreModule implements OnApplicationShutdown {
         // tenant database, otherwise it will throw error
         await Promise.all(
           Object.entries(connection.models).map(([k, m]) =>
-            m.createCollection(),
-          ),
+            m.createCollection()
+          )
         );
       }
 
@@ -358,7 +364,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
       const modelCreated: Model<unknown> = connection.model(
         name,
         schema,
-        collection,
+        collection
       );
 
       if (moduleOptions.forceCreateCollections) {
@@ -419,7 +425,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
       useFactory: (
         req: Request,
         moduleOptions: TenancyModuleOptions,
-        adapterHost: HttpAdapterHost,
+        adapterHost: HttpAdapterHost
       ) => this.getTenant(req, moduleOptions, adapterHost),
       inject: [REQUEST, TENANT_MODULE_OPTIONS, DEFAULT_HTTP_ADAPTER_HOST],
     };
@@ -435,7 +441,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
    * @memberof TenancyCoreModule
    */
   private static createAsyncProviders(
-    options: TenancyModuleAsyncOptions,
+    options: TenancyModuleAsyncOptions
   ): Provider[] {
     if (options.useExisting || options.useFactory) {
       return [this.createAsyncOptionsProvider(options)];
@@ -462,7 +468,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
    * @memberof TenancyCoreModule
    */
   private static createAsyncOptionsProvider(
-    options: TenancyModuleAsyncOptions,
+    options: TenancyModuleAsyncOptions
   ): Provider {
     if (options.useFactory) {
       return {
@@ -522,7 +528,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
    * @memberof TenancyCoreModule
    */
   private static adapterIsFastify(adapterHost: HttpAdapterHost): boolean {
-    return adapterHost.httpAdapter.getType() === 'fastify';
+    return adapterHost.httpAdapter.getType() === "fastify";
   }
 
   /**
@@ -535,11 +541,11 @@ export class TenancyCoreModule implements OnApplicationShutdown {
    * @memberof TenancyCoreModule
    */
   private static getSubdomainsForFastify(req: Request): string[] {
-    let host = req?.headers?.host || '';
+    let host = req?.headers?.host || "";
 
-    host = host.split(':')[0];
+    host = host.split(":")[0];
     host = host.trim();
 
-    return host.split('.').reverse();
+    return host.split(".").reverse();
   }
 }
